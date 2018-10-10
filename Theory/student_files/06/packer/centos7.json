@@ -1,0 +1,143 @@
+{
+  "variables": {
+    "iso_url": "https://mirror.yandex.ru/centos/7/isos/x86_64/CentOS-7-x86_64-Minimal-1804.iso",
+    "shutdown_command": "echo 'vagrant'|sudo -S /sbin/halt -h -p",
+    "kickstart_file": "c7-ks.cfg",
+    "vm_name": "TEMPLATE-ansible-example",
+    "vm_hyperv_switch": "Default Switch",
+    "vm_hyperv_mac": "0000deadbeef",
+    "http_proxy": "http://spbsrv-proxy2.t-systems.ru:3128",
+    "no_proxy": "seu15.gdc-leinf01.t-systems.com"
+  },
+
+  "builders":
+  [
+    {
+      "type": "virtualbox-iso",
+      "boot_command": [
+        "<tab> text ks=hd:fd0:/{{user `kickstart_file`}}<enter><wait>"
+      ],
+      "guest_os_type": "RedHat_64",
+      "boot_wait": "20s",
+      "disk_size": 100000,
+      "floppy_files": [
+        "{{template_dir}}/{{user `kickstart_file`}}"
+      ],
+      "iso_urls": [
+        "{{user `iso_url`}}"
+      ],
+      "iso_checksum": "",
+      "iso_checksum_type": "none",
+      "ssh_username": "root",
+      "ssh_password": "vagrant",
+      "ssh_port": 22,
+      "ssh_wait_timeout": "1h",
+      "shutdown_command": "{{user `shutdown_command`}}",
+      "vm_name": "{{ user `vm_name`}}",
+      "output_directory": "{{ user `vm_name`}}_virtualbox",
+      "headless": true,
+      "guest_additions_path": "VBoxGuestAdditions_{{.Version}}.iso",
+      "virtualbox_version_file": ".vbox_version",
+      "vboxmanage": [
+        [
+          "modifyvm",
+          "{{.Name}}",
+          "--memory",
+          "2048"
+        ],
+        [
+          "modifyvm",
+          "{{.Name}}",
+          "--cpus",
+          "2"
+        ]
+      ]
+    },
+    {
+      "type": "hyperv-iso",
+
+      "boot_command": [
+        "<tab> text ks=hd:fd0:/{{user `kickstart_file`}}<enter><wait>"
+      ],
+      "boot_wait": "20s",
+      "disk_size": 100000,
+      "floppy_files": [
+        "{{template_dir}}/{{user `kickstart_file`}}"
+      ],
+      "iso_urls": [
+        "{{user `iso_url`}}"
+      ],
+      "iso_checksum": "",
+      "iso_checksum_type": "none",
+      "ssh_username": "root",
+      "ssh_password": "vagrant",
+      "ssh_port": 22,
+      "ssh_timeout" : "30m",
+      "shutdown_command": "{{user `shutdown_command`}}",
+      "vm_name": "{{ user `vm_name`}}",
+      "output_directory": "c:\\tmp\\{{ user `vm_name`}}",
+      "cpu": 2,
+      "generation": 1,
+      "ram_size": 1024,
+      "mac_address": "{{user `vm_hyperv_mac`}}",
+      "switch_name": "{{user `vm_hyperv_switch`}}"
+    }
+  ],
+
+  "provisioners": [
+    {
+      "type": "shell",
+      "inline": [
+        "echo 'https_proxy={{user `http_proxy`}}' >> /etc/environment",
+        "echo 'http_proxy={{user `http_proxy`}}' >> /etc/environment",
+        "echo 'ftp_proxy={{user `http_proxy`}}' >> /etc/environment",
+        "echo 'no_proxy={{user `no_proxy`}}' >> /etc/environment",
+        "echo 'ip_resolve=4' >> /etc/yum.conf"
+      ]
+    },
+    {
+      "type": "shell",
+      "pause_before": "15s",
+      "inline": [
+        "yum install -y epel-release",
+        "yum install -y ansible"
+      ]
+    },
+    {
+      "type": "ansible-local",
+      "playbook_file": "../provision_me.yml",
+      "role_paths": [ "../roles/webserver" ]
+    },
+    {
+      "type": "shell",
+      "pause_before": "5s",
+      "inline": [
+        "yum -y upgrade",
+        "useradd vagrant",
+        "mkdir -pv /home/vagrant/.ssh/",
+        "echo 'ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA6NF8iallvQVp22WDkTkyrtvp9eWW6A8YVr+kz4TjGYe7gHzIw+niNltGEFHzD8+v1I2YJ6oXevct1YeS0o9HZyN1Q9qgCgzUFtdOKLv6IedplqoPkcmF0aYet2PkEDo3MlTBckFXPITAMzF8dJSIFo9D8HfdOV0IAdx4O7PtixWKn5y2hMNG0zQPyUecp4pzC6kivAIhyfHilFR61RGL+GPXQ2MWZWFYbAGjyiYJnAmCP3NOTd0jMZEnDkbUvxhMmBYSdETk1rRgm+R4LOzFUGaHqHDLKLX+FIPKcF96hrucXzcWyLbIbEgE98OHlnVYCzRdK8jlqm8tehUc9c9WhQ== vagrant insecure public key' > /home/vagrant/.ssh/authorized_keys",
+        "chown -vR vagrant:vagrant /home/vagrant/.ssh",
+        "chmod -v 700 /home/vagrant/.ssh",
+        "chmod -v 600 /home/vagrant/.ssh/authorized_keys",
+        "echo 'vagrant ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers",
+        "echo 'UseDNS no' >> /etc/ssh/sshd_config"
+      ]
+    },
+    {
+      "type": "shell",
+      "script": "virtualbox.sh"
+    },
+    {
+      "type": "shell",
+      "pause_before": "5s",
+      "inline": [
+        "rm -f /etc/environment",
+        "touch /etc/environment",
+        "sed -i 's/ip_resolve=4//g' /etc/yum.conf",
+        "yum clean all"
+      ]
+    }
+
+  ],
+  "post-processors": ["vagrant"]
+}

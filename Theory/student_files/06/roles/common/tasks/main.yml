@@ -1,0 +1,53 @@
+---
+- name: groups are created
+  group:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - "{{ sshgroup_name }}"
+    - wheel
+
+- name: create admin accounts
+  user:
+    name: "{{ item.login }}"
+    groups: "{{ sshgroup_name }}"
+    shell: /bin/bash
+    update_password: always
+    password: "{{ item.password_hash }}"
+  with_items: "{{ super_admins }}"
+
+- name: super admins can sudo without password
+  lineinfile:
+    dest: /etc/sudoers
+    state: present
+    line: "{{ item.login }} ALL=(ALL:ALL) NOPASSWD:ALL"
+    validate: 'visudo -cf %s'
+  with_items: "{{ super_admins }}"
+
+- name: admins have access via pub key
+  authorized_key:
+    user: "{{ item.login }}"
+    key: "{{ lookup('file', 'keys/{{ item.login }}.pub') }}"
+  with_items: "{{ super_admins }}"
+
+- name: essentials are installed
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - iptables-services
+    - vim
+
+- name: iptables rules are installed
+  template:
+    src: "{{ item }}.j2"
+    dest: "/etc/sysconfig/{{ item }}"
+    backup: yes
+    force: yes
+    validate: "/sbin/{{ item }}-restore --test %s"
+  with_items:
+    - iptables
+    - ip6tables
+  notify:
+    - reload iptables
+    - reload ip6tables

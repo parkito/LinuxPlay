@@ -1,0 +1,14 @@
+---
+- name: Checkout repo
+  git:
+    repo: https://github.com/gabrielecirulli/2048.git
+    dest: /var/www/html
+    force: yes
+    version: HEAD
+
+- name: Httpd is restarted
+  systemd:
+    name: httpd
+    enabled: yes
+    state: restarted
+    daemon_reload: yes
