@@ -1,0 +1,5 @@
+# Configure snmpd via template module
+- name: Configure snmpd with template
+  template:
+    src: "templates/snmpd.j2"
+    dest: /etc/snmp/snmpd.conf

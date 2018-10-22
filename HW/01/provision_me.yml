@@ -51,6 +51,13 @@
         name: git
         state: present
 
+    - name: Checkout repo
+      git:
+        repo: https://github.com/gabrielecirulli/2048.git
+        dest: /var/www/html
+        force: yes
+        version: HEAD
+
     - iptables:
         chain: INPUT
         protocol: tcp
@@ -66,79 +73,6 @@
         enabled: yes
         state: restarted
         daemon_reload: yes
-
-# Tasks
-    # Install snmpd
-    - name: Install snmpd
-      yum:
-        name: net-snmp
-        state: present
-    
-    # Remove default snmpd config via file module 
-
- # - name: move snmpd config files
-   # command: mv /etc/snmp/snmpd.conf /etc/snmp/snmpd.conf.org
-
-    - name: Remove default config
-      file:
-        path: /etc/snmp/snmpd.conf
-        state: absent
-
-    # Configure snmpd via blockinfile module
-
-    - name: Configure snmpd via blockinfile
-      blockinfile:
-        path: /etc/snmp/snmpd.conf
-        create: true
-        block: |
-          com2sec ConfigUser      default         9VEteky0jjKdnUrap
-          com2sec AllUser         default         cae5d4182257cc667
-          group   ConfigGroup     v2c             ConfigUser
-          group   AllGroup        v2c             AllUser
-          view    SystemView      included        .1.3.6.1.2.1.1
-          view    SystemView      included        .1.3.6.1.2.1.25.1.1
-          view    AllView         included        .1
-          access  ConfigGroup     ""      any     noauth  exact   SystemView      none    none
-          access  AllGroup        ""      any     noauth  exact   AllView         none    none 
-
-    # Open via iptables module 161 udp port
-
-    - name: Open 161 udp
-      iptables:
-        chain: INPUT
-        protocol: udp
-        destination_port: 161 
-        jump: ACCEPT
-        comment: Open 161th udp port
-
-    # Generate self signed cert via openssl_certificate module
-
-    - name: Install pip
-      yum:
-        name: python-pip
-        state: present
-
-    - name: Install criptography
-      pip:
-        name: cryptography
-        state: latest
-
-    - name: Remove old version of pyOpenSSL
-      yum:
-        name: pyOpenSSL
-        state: absent
- 
-    - name: Install pyOpenSSL
-      pip:
-        name: pyOpenSSL
-        state: present
-
-    - name: Generate sertificates
-      openssl_certificate:
-        path: /etc/ssl/certs/my.crt
-        privatekey_path: /etc/ssl/certs/my.pem
-        csr_path: /etc/ssl/certs/my.csr
-        provider: selfsigned
 
     - name: Print message
       debug:
