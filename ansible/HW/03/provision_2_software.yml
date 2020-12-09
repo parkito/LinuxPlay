@@ -1,0 +1,12 @@
+---
+- name: install httpd
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - httpd
+    # Install snmpd (use loops)
+    - net-snmp
+    - iptables-services
+    - git
+  when: ansible_distribution == 'CentOS'

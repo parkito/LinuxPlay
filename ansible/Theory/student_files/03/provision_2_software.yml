@@ -1,0 +1,10 @@
+---
+- name: install httpd
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - httpd
+    - iptables-services
+    - git
+  when: ansible_distribution == 'CentOS'

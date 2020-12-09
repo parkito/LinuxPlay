@@ -1,0 +1,64 @@
+vm_name = 'Tads system'
+rsync_ignore = ['out_of_context/']
+http_proxy_prop = 'http://proxy.t-systems.ru:3128'
+
+Vagrant.configure('2') do |config|
+  unless ENV['http_proxy'].nil?
+    config.proxy.enabled  = true
+    config.proxy.http     = http_proxy_prop
+    config.proxy.https    = http_proxy_prop
+    config.proxy.no_proxy = ENV['*t-systems.ru']
+  end
+
+
+ config.vm.define "master" do |master|
+    master.vm.hostname = 'master'
+    master.vm.box = "ubuntu/trusty64"
+
+    master.vm.synced_folder './', '/vagrant', type: 'rsync', rsync__exclude: rsync_ignore
+
+    master.vm.network :private_network, ip: "192.168.56.101", virtualbox__intnet: true
+    master.vm.network "forwarded_port", guest: 80, host: 2141
+    master.vm.network "forwarded_port", guest: 22, host: 2142
+
+    # master.vm.provision 'shell', inline: 'chmod -v 0440 /etc/sudoers.d/vagrant'
+    # master.vm.provision 'shell', path: 'init.sh'
+    master.vm.provision 'ansible_local' do |ansible|
+      ansible.playbook = '/vagrant/provision.yml'
+      ansible.verbose = 'vvv'
+    end
+    
+    master.vm.provider :virtualbox do |vb|
+      vb.memory = 1024
+    end
+  end
+
+
+# config.vm.define "development" do |dev|
+#     dev.vm.hostname = 'dev'
+#     dev.vm.box = "ubuntu/precise64"
+
+#     dev.vm.network :private_network, ip: "192.168.56.102", virtualbox__intnet: true
+#     dev.vm.network "forwarded_port", guest: 80, host: 2144
+#     dev.vm.network "forwarded_port", guest: 22, host: 2145
+
+#     dev.vm.provider :virtualbox do |vb|
+#       vb.memory = 1024
+#     end
+#   end
+
+
+# config.vm.define "production" do |prod|
+#     prod.vm.hostname = 'dev'
+#     prod.vm.box = "ubuntu/precise64"
+
+#     prod.vm.network :private_network, ip: "192.168.56.103", virtualbox__intnet: true
+#     prod.vm.network "forwarded_port", guest: 80, host: 2146
+#     prod.vm.network "forwarded_port", guest: 22, host: 2147
+
+#     prod.vm.provider :virtualbox do |vb|
+#       vb.memory = 1024
+#     end
+  # end
+
+end

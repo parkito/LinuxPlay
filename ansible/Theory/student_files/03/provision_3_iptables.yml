@@ -1,0 +1,24 @@
+---
+- name: iptables rules are installed
+  template:
+    src: "{{ item }}.j2"
+    dest: "/etc/sysconfig/{{ item }}"
+    backup: yes
+    force: yes
+    validate: "/sbin/{{ item }}-restore --test %s"
+  with_items:
+    - iptables
+    - ip6tables
+  when: ansible_distribution is version('7.4', '>=') and inventory_hostname in groups.all
+
+- name: reload iptables
+  command: iptables-restore /etc/sysconfig/iptables
+  register: result
+  ignore_errors: True
+  when: ansible_distribution == "CentOS" and some_strange_var is not defined
+  args:
+    creates: /var/run/docker.pid
+
+- debug:
+    msg: "it is result:{{ result }}"
+  when: result is success

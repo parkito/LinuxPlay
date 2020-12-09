@@ -1,0 +1,14 @@
+Listen 443 https
+
+SSLCertificateFile {{ v_openssl_certfile }}
+SSLCertificateKeyFile {{ v_openssl_privatekey }}
+
+<VirtualHost *:443>
+ SSLEngine on
+ SSLCertificateFile {{ v_openssl_certfile }}
+ SSLCertificateKeyFile {{ v_openssl_privatekey }}
+ <Directory /var/www/html>
+ AllowOverride All
+ </Directory>
+ DocumentRoot /var/www/html
+</VirtualHost>

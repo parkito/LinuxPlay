@@ -1,0 +1,5 @@
+---
+
+super_admins:
+  - {login: deploy, password_hash: '$6$NwI7op8FHR1VQta6$zuQXHtNtM/7SRQsf1./18WbBrHMq4mT88nWh67ThmlWcqyVX3FBTY9uj/07tR9ViDEvjg6/bh0y3mSjeDQYe3.'}
+sshgroup_name: sshusers
