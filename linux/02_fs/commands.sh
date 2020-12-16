@@ -1,0 +1,1 @@
+lsblk    #list of block devices
