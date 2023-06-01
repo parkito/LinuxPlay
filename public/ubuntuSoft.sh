@@ -19,12 +19,6 @@ function setupEnvConfigs() {
   echo EDITOR=vim >>/etc/environment
 }
 
-function magicKeyboard() {
-  log "System wide configuration"
-  echo options hid_apple fnmode=2 | sudo tee -a /etc/modprobe.d/hid_apple.conf
-  sudo update-initramfs -u -k all
-}
-
 function doReboot() {
   sudo reboot
 }
